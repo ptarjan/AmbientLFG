@@ -5,6 +5,7 @@
 ## Version: 0.3.0
 ## Notes: Alerts you when a Group Finder listing matching your keywords appears, so you can click to sign up.
 ## SavedVariables: AmbientLFGDB
+## X-Curse-Project-ID: 1607618
 
 AmbientLFG.lua
 AmbientLFGUI.lua
