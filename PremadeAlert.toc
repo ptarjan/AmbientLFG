@@ -1,0 +1,10 @@
+## Interface: 120007
+## Title: Premade Alert
+## IconTexture: Interface\Icons\INV_Misc_Bell_01
+## Author: ptarjan
+## Version: 0.3.0
+## Notes: Alerts you when a Group Finder listing matching your keywords appears, so you can click to sign up.
+## SavedVariables: PremadeAlertDB
+
+PremadeAlert.lua
+PremadeAlertUI.lua
