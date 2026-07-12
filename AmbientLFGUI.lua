@@ -148,10 +148,12 @@ Refresh = function()
 	-- title tokens render as real text inside a FontString
 	local matchStore = ns.GetMatches()
 	local matchList = {}
-	local now = GetTime()
-	local maxAge = (db.interval or 10) * 3 + 10
+	-- expire a match only when it was absent from NEWER search results;
+	-- wall-clock aging made entries flicker out whenever the player stopped
+	-- clicking (no clicks = no searches = nothing refreshing lastSeen)
+	local lastResults = ns.GetStats().lastResultsAt or 0
 	for key, m in pairs(matchStore) do
-		if now - m.lastSeen > maxAge then
+		if lastResults - m.lastSeen > (db.interval or 10) + 5 then
 			matchStore[key] = nil
 		else
 			matchList[#matchList + 1] = m

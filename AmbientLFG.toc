@@ -2,7 +2,7 @@
 ## Title: AmbientLFG
 ## IconTexture: Interface\Icons\INV_Misc_Bell_01
 ## Author: ptarjan
-## Version: 0.3.0
+## Version: 0.3.1
 ## Notes: Alerts you when a Group Finder listing matching your keywords appears, so you can click to sign up.
 ## SavedVariables: AmbientLFGDB
 ## X-Curse-Project-ID: 1607618

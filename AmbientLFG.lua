@@ -664,7 +664,13 @@ local function ruleCategories()
 end
 
 local function constructedSearch(categoryID)
-	local filters = Enum.LFGListFilter and Enum.LFGListFilter.Recommended or 1
+	-- dungeons only display recommended listings; raids search everything —
+	-- a Recommended-only raid search returned 15 listings where the panel
+	-- found 40
+	local filters = 0
+	if categoryID == CATEGORY_DUNGEONS then
+		filters = Enum.LFGListFilter and Enum.LFGListFilter.Recommended or 1
+	end
 	-- before the Group Finder panel has initialized once, the saved language
 	-- filter can be an empty set — which matches NOTHING and yields
 	-- 0-result searches; fall back to the default (player locale) filter
@@ -693,7 +699,15 @@ local function issueSearch()
 	local cats = ruleCategories()
 	if #cats > 0 then
 		searchRotation = searchRotation % #cats + 1
-		if constructedSearch(cats[searchRotation]) then
+		local cat = cats[searchRotation]
+		-- prefer replaying the player's own captured search when it targets
+		-- this category: it reproduces the panel's exact filters, where the
+		-- constructed search only approximates them
+		if lastSearch and lastSearch[1] == cat
+			and pcall(C_LFGList.Search, unpack(lastSearch, 1, lastSearch.n)) then
+			return
+		end
+		if constructedSearch(cat) then
 			return
 		end
 	end

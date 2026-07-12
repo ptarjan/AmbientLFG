@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+- Background searches now find the same listings the Group Finder window shows — previously they could miss more than half the groups (a search filter was too narrow)
+- When you've searched manually at least once, background searches reuse your exact search settings for that section
+- Groups no longer briefly disappear from the Current matches list and reappear — entries now only drop out when they're actually gone from newer search results
+
 ## 0.3.0
 Initial release.
 - Watches the Premade Group Finder for groups matching your rules and alerts you with a raid-warning banner, sound, and a flashing taskbar icon so you can sign up before the group fills
