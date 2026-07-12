@@ -1,2 +1,5 @@
 package-as: AmbientLFG
 manual-changelog: CHANGELOG.md
+
+ignore:
+  - logo.png
