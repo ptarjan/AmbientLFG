@@ -1,10 +1,10 @@
 ## Interface: 120007
-## Title: Premade Alert
+## Title: AmbientLFG
 ## IconTexture: Interface\Icons\INV_Misc_Bell_01
 ## Author: ptarjan
 ## Version: 0.3.0
 ## Notes: Alerts you when a Group Finder listing matching your keywords appears, so you can click to sign up.
-## SavedVariables: PremadeAlertDB
+## SavedVariables: AmbientLFGDB
 
-PremadeAlert.lua
-PremadeAlertUI.lua
+AmbientLFG.lua
+AmbientLFGUI.lua

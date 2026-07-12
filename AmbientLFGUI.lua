@@ -219,7 +219,7 @@ Refresh = function()
 end
 
 local function CreateUI()
-	local f = CreateFrame("Frame", "PremadeAlertFrame", UIParent, "BackdropTemplate")
+	local f = CreateFrame("Frame", "AmbientLFGFrame", UIParent, "BackdropTemplate")
 	f:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
 	f:SetPoint("CENTER")
 	f:SetBackdrop({
@@ -537,10 +537,10 @@ local function ToggleUI()
 end
 ns.ToggleUI = ToggleUI
 
--- Bare /pma (or /pma ui) opens the window; everything else falls through to
+-- Bare /alfg (or /alfg ui) opens the window; everything else falls through to
 -- the core handler, then the open window refreshes to reflect it.
-local origHandler = SlashCmdList.PREMADEALERT
-SlashCmdList.PREMADEALERT = function(input)
+local origHandler = SlashCmdList.AMBIENTLFG
+SlashCmdList.AMBIENTLFG = function(input)
 	local trimmed = strtrim(input or ""):lower()
 	if trimmed == "" or trimmed == "ui" then
 		ToggleUI()

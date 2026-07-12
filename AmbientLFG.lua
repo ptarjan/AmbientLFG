@@ -39,7 +39,7 @@ local matches = {} -- currently-listed groups matching a rule, for the UI
 local lastSearch -- captured args from the most recent C_LFGList.Search call
 
 local function msg(text)
-	print("|cff33ff99PremadeAlert|r: " .. text)
+	print("|cff33ff99AmbientLFG|r: " .. text)
 end
 
 -- 12.0 secret values: any field off a search result can be secret; never
@@ -410,7 +410,7 @@ local function alertMatches(hits)
 	end
 	if #hits > 3 then
 		RaidNotice_AddMessage(RaidWarningFrame,
-			("...and %d more matches — see /pma"):format(#hits - 3),
+			("...and %d more matches — see /alfg"):format(#hits - 3),
 			ChatTypeInfo["RAID_WARNING"])
 	end
 	-- chat frames render protected title tokens as "Unknown" (raid banners
@@ -790,8 +790,8 @@ frame:RegisterEvent("LFG_LIST_SEARCH_RESULT_UPDATED")
 frame:RegisterEvent("LFG_LIST_SEARCH_FAILED")
 frame:SetScript("OnEvent", function(_, event, arg1)
 	if event == "PLAYER_LOGIN" then
-		PremadeAlertDB = PremadeAlertDB or {}
-		db = PremadeAlertDB
+		AmbientLFGDB = AmbientLFGDB or {}
+		db = AmbientLFGDB
 		for k, v in pairs(defaults) do
 			if db[k] == nil then
 				db[k] = v
@@ -851,7 +851,7 @@ local function status()
 		(lastSearch or #db.rules > 0) and "" or " | add a rule to start watching"
 	))
 	if #db.rules == 0 then
-		msg("no rules — add one with /pma add mythic lura +tank")
+		msg("no rules — add one with /alfg add mythic lura +tank")
 	else
 		for i, rule in ipairs(db.rules) do
 			msg(("  rule %d: %s"):format(i, ruleToString(rule)))
@@ -860,9 +860,10 @@ local function status()
 	msg("ignoring groups containing: " .. (#db.ignores > 0 and table.concat(db.ignores, ", ") or "(nothing)"))
 end
 
-SLASH_PREMADEALERT1 = "/premadealert"
-SLASH_PREMADEALERT2 = "/pma"
-SlashCmdList.PREMADEALERT = function(input)
+SLASH_AMBIENTLFG1 = "/ambientlfg"
+SLASH_AMBIENTLFG2 = "/alfg"
+SLASH_AMBIENTLFG3 = "/pma"
+SlashCmdList.AMBIENTLFG = function(input)
 	local cmd, rest = input:match("^%s*(%S*)%s*(.-)%s*$")
 	cmd = cmd:lower()
 	if cmd == "add" and rest ~= "" then
@@ -879,7 +880,7 @@ SlashCmdList.PREMADEALERT = function(input)
 			local removed = table.remove(db.rules, i)
 			msg(("removed rule %d: %s"):format(i, ruleToString(removed)))
 		else
-			msg("usage: /pma del <rule number> (see /pma list)")
+			msg("usage: /alfg del <rule number> (see /alfg list)")
 		end
 	elseif cmd == "clear" then
 		wipe(db.rules)
@@ -942,7 +943,7 @@ SlashCmdList.PREMADEALERT = function(input)
 	end
 end
 
--- exports for PremadeAlertUI.lua
+-- exports for AmbientLFGUI.lua
 ns.msg = msg
 ns.parseRule = parseRule
 ns.ruleToString = ruleToString
