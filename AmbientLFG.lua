@@ -693,11 +693,10 @@ local function constructedSearch(categoryID)
 end
 
 local function issueSearch()
+	-- deliberately no per-cycle chat line even in debug mode — it was pure
+	-- noise; the scan summary and the UI heartbeat already show the cadence
 	stats.autoIssued = stats.autoIssued + 1
 	stats.lastAutoAt = GetTime()
-	if db.debug then
-		msg(("auto-search #%d issued"):format(stats.autoIssued))
-	end
 	local cats = ruleCategories()
 	if #cats > 0 then
 		searchRotation = searchRotation % #cats + 1
