@@ -32,6 +32,8 @@ local frame = CreateFrame("Frame")
 local ticker
 local scanPending = false
 local backoffUntil = 0
+local consecutiveFailures = 0
+local suspended = false
 local alerted = {}
 local activityNameCache = {}
 local stats = { autoIssued = 0 }
@@ -734,7 +736,13 @@ local function autoSearch()
 	if not db.enabled or not db.auto or (#db.rules == 0 and not lastSearch) then
 		return
 	end
-	if GetTime() < backoffUntil or playerIsBrowsing() then
+	if suspended or GetTime() < backoffUntil or playerIsBrowsing() then
+		return
+	end
+	-- the Group Finder isn't usable in battlegrounds/arenas; searching
+	-- there just generates failure spam
+	local _, instanceType = IsInInstance()
+	if instanceType == "pvp" or instanceType == "arena" then
 		return
 	end
 	if not pendingAuto then
@@ -745,6 +753,7 @@ end
 
 WorldFrame:HookScript("OnMouseDown", function()
 	if pendingAuto and db and db.enabled and db.auto
+		and not suspended
 		and GetTime() >= backoffUntil
 		and not playerIsBrowsing()
 		and GetTime() - (stats.lastAnySearchAt or 0) >= 5 then
@@ -755,6 +764,11 @@ WorldFrame:HookScript("OnMouseDown", function()
 end)
 
 local function restartTicker()
+	-- toggling auto-search (or changing the interval) is the manual way to
+	-- retry after a suspension
+	suspended = false
+	consecutiveFailures = 0
+	stats.suspended = false
 	if ticker then
 		ticker:Cancel()
 		ticker = nil
@@ -817,16 +831,33 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		end
 		restartTicker()
 	elseif event == "LFG_LIST_SEARCH_FAILED" then
-		-- Blizzard throttles searches (~3s); when one fails, back way off so
-		-- we don't wedge the Group Finder into its empty-results error state
-		backoffUntil = GetTime() + 30
+		-- back off exponentially on repeated failures (throttle, or the
+		-- player simply can't use the Group Finder right now), and give up
+		-- with ONE message instead of retrying forever
+		consecutiveFailures = consecutiveFailures + 1
+		local backoff = math.min(30 * 2 ^ (consecutiveFailures - 1), 300)
+		backoffUntil = GetTime() + backoff
 		stats.backoffUntil = backoffUntil
-		if db and db.debug then
-			msg("search failed (throttled?) — backing off 30s")
+		if consecutiveFailures >= 5 and not suspended then
+			suspended = true
+			stats.suspended = true
+			msg("auto-search suspended — the Group Finder keeps rejecting searches (not usable right now?). It resumes after a successful manual search or toggling auto-search.")
+		elseif db and db.debug then
+			msg(("search failed — backing off %ds"):format(backoff))
 		end
 	elseif event == "LFG_LIST_SEARCH_RESULT_UPDATED" then
 		markDirty(arg1)
 	else
+		consecutiveFailures = 0
+		backoffUntil = 0
+		stats.backoffUntil = nil
+		if suspended then
+			suspended = false
+			stats.suspended = false
+			if db and db.debug then
+				msg("searches working again — auto-search resumed")
+			end
+		end
 		queueScan()
 	end
 end)

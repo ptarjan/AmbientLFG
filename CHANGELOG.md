@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.3.1
+- No more repeated failure messages when the Group Finder isn't usable (in a battleground, on an ineligible character, etc.) — retries slow down automatically and stop entirely after several failures, with a single message; searching resumes on its own once the Group Finder works again
+- Background searches pause in battlegrounds and arenas
 - Background searches now find the same listings the Group Finder window shows — previously they could miss more than half the groups (a search filter was too narrow)
 - When you've searched manually at least once, background searches reuse your exact search settings for that section
 - Groups no longer briefly disappear from the Current matches list and reappear — entries now only drop out when they're actually gone from newer search results

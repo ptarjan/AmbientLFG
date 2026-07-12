@@ -208,6 +208,8 @@ Refresh = function()
 		ui.statusText:SetText("|cffff6666Alerts disabled|r" .. heartbeat)
 	elseif db.auto and not ns.IsArmed() then
 		ui.statusText:SetText("|cffffcc00Auto-search idle — add a rule to start watching|r" .. heartbeat)
+	elseif db.auto and stats.suspended then
+		ui.statusText:SetText("|cffff6666Auto-search suspended — searches keep failing (Group Finder not usable right now?). Toggle auto-search to retry.|r" .. heartbeat)
 	elseif db.auto and stats.backoffUntil and GetTime() < stats.backoffUntil then
 		ui.statusText:SetText(("|cffff9933Search throttled — pausing %ds|r"):format(
 			math.ceil(stats.backoffUntil - GetTime())) .. heartbeat)
