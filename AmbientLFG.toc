@@ -1,4 +1,4 @@
-## Interface: 120007
+## Interface: 120007, 120100
 ## Title: AmbientLFG
 ## IconTexture: Interface\Icons\INV_Misc_Bell_01
 ## Author: ptarjan

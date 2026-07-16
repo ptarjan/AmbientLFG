@@ -6,6 +6,7 @@
 - Background searches now find the same listings the Group Finder window shows — previously they could miss more than half the groups (a search filter was too narrow)
 - When you've searched manually at least once, background searches reuse your exact search settings for that section
 - Groups no longer briefly disappear from the Current matches list and reappear — entries now only drop out when they're actually gone from newer search results
+- Ready for WoW 12.1.0
 
 ## 0.3.0
 Initial release.
