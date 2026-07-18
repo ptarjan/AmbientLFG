@@ -12,20 +12,14 @@ local defaults = {
 	blockedLeaders = {},
 }
 
-local ROLE_TOKENS = {
-	tank = "TANK", tanks = "TANK",
-	healer = "HEALER", heal = "HEALER", heals = "HEALER", healers = "HEALER",
-	dps = "DAMAGER", dd = "DAMAGER", damager = "DAMAGER",
-}
-local ROLE_REMAINING = {
-	TANK = "TANK_REMAINING",
-	HEALER = "HEALER_REMAINING",
-	DAMAGER = "DAMAGER_REMAINING",
-}
-local ROLE_LABEL = { TANK = "tank", HEALER = "healer", DAMAGER = "dps" }
-
-local CATEGORY_DUNGEONS = GROUP_FINDER_CATEGORY_ID_DUNGEONS or 2
-local CATEGORY_RAIDS = 3
+-- Pure matching logic lives in AmbientLFG_Match.lua (unit-tested outside
+-- the game); this file keeps the WoW-API-touching orchestration.
+local Match = ns.Match
+local safeStr, safeBool, safeNum = Match.safeStr, Match.safeBool, Match.safeNum
+local fuzzyPattern, normalizeText = Match.fuzzyPattern, Match.normalizeText
+local matchesIgnoreWord, ruleToString, parseRule = Match.matchesIgnoreWord, Match.ruleToString, Match.parseRule
+local roleIsOpen = Match.roleIsOpen
+local CATEGORY_DUNGEONS, CATEGORY_RAIDS = Match.CATEGORY_DUNGEONS, Match.CATEGORY_RAIDS
 
 local db
 local frame = CreateFrame("Frame")
@@ -42,109 +36,6 @@ local lastSearch -- captured args from the most recent C_LFGList.Search call
 
 local function msg(text)
 	print("|cff33ff99AmbientLFG|r: " .. text)
-end
-
--- 12.0 secret values: any field off a search result can be secret; never
--- concatenate or compare one without guarding first.
-local function safeStr(v)
-	if v == nil or (issecretvalue and issecretvalue(v)) then
-		return ""
-	end
-	return tostring(v)
-end
-
-local function safeBool(v)
-	if issecretvalue and issecretvalue(v) then
-		return false
-	end
-	return v
-end
-
-local function safeNum(v)
-	if type(v) ~= "number" or (issecretvalue and issecretvalue(v)) then
-		return nil
-	end
-	return v
-end
-
--- "lura" -> "l+u+r+a+" so doubled/stretched spellings (Lurra, Luraa) still
--- hit. Compiled once per word — this runs for every word × every listing.
-local patternCache = {}
-local function fuzzyPattern(word)
-	local pattern = patternCache[word]
-	if not pattern then
-		pattern = (word:lower():gsub("[%w%p]", function(c)
-			return c:match("%w") and c .. "+" or "%" .. c .. "+"
-		end))
-		patternCache[word] = pattern
-	end
-	return pattern
-end
-
--- Sellers dodge text filters with Unicode lookalikes (ＷＴＳ, 𝐖𝐓𝐒, ᴡᴛꜱ, ШТЅ);
--- map the common fancy-letter ranges back to ASCII before matching.
-local HOMOGLYPHS = {
-	-- Latin small caps / phonetic letters (ᴡᴛꜱ-style)
-	[0x1D00] = 97, [0x0299] = 98, [0x1D04] = 99, [0x1D05] = 100, [0x1D07] = 101,
-	[0xA730] = 102, [0x0262] = 103, [0x029C] = 104, [0x026A] = 105, [0x1D0A] = 106,
-	[0x1D0B] = 107, [0x029F] = 108, [0x1D0D] = 109, [0x0274] = 110, [0x1D0F] = 111,
-	[0x1D18] = 112, [0x0280] = 114, [0xA731] = 115, [0x1D1B] = 116, [0x1D1C] = 117,
-	[0x1D20] = 118, [0x1D21] = 119, [0x028F] = 121, [0x1D22] = 122,
-	-- Cyrillic lookalikes
-	[0x0410] = 65, [0x0412] = 66, [0x0415] = 69, [0x041A] = 75, [0x041C] = 77,
-	[0x041D] = 72, [0x041E] = 79, [0x0420] = 80, [0x0421] = 67, [0x0422] = 84,
-	[0x0425] = 88, [0x0405] = 83, [0x0430] = 97, [0x0435] = 101, [0x043E] = 111,
-	[0x0440] = 112, [0x0441] = 99, [0x0443] = 121, [0x0445] = 120, [0x0455] = 115,
-	-- Greek lookalikes
-	[0x0391] = 65, [0x0392] = 66, [0x0395] = 69, [0x0397] = 72, [0x0399] = 73,
-	[0x039A] = 75, [0x039C] = 77, [0x039D] = 78, [0x039F] = 79, [0x03A1] = 80,
-	[0x03A4] = 84, [0x03A5] = 89, [0x03A7] = 88, [0x03BF] = 111,
-}
-
-local function normalizeCodepoint(cp)
-	local mapped = HOMOGLYPHS[cp]
-	if mapped then
-		return mapped
-	end
-	if cp >= 0xFF01 and cp <= 0xFF5E then return cp - 0xFEE0 end -- fullwidth
-	if cp >= 0x24B6 and cp <= 0x24CF then return cp - 0x24B6 + 65 end -- circled A-Z
-	if cp >= 0x24D0 and cp <= 0x24E9 then return cp - 0x24D0 + 97 end -- circled a-z
-	if cp >= 0x1D400 and cp <= 0x1D7CB then -- mathematical bold/italic/script/etc
-		local off = (cp - 0x1D400) % 52
-		if off < 26 then return 65 + off end
-		return 97 + off - 26
-	end
-	if cp >= 0x1D7CE and cp <= 0x1D7FF then return 48 + ((cp - 0x1D7CE) % 10) end -- math digits
-	if cp >= 0x1F130 and cp <= 0x1F149 then return 65 + (cp - 0x1F130) end -- squared A-Z
-	if cp >= 0x1F170 and cp <= 0x1F189 then return 65 + (cp - 0x1F170) end -- neg squared A-Z
-	return nil
-end
-
-local function decodeUTF8(ch)
-	local b1 = ch:byte(1)
-	if b1 < 0x80 then
-		return b1
-	end
-	local b2 = ch:byte(2) or 0
-	if b1 < 0xE0 then
-		return (b1 - 0xC0) * 0x40 + (b2 - 0x80)
-	end
-	local b3 = ch:byte(3) or 0
-	if b1 < 0xF0 then
-		return (b1 - 0xE0) * 0x1000 + (b2 - 0x80) * 0x40 + (b3 - 0x80)
-	end
-	local b4 = ch:byte(4) or 0
-	return (b1 - 0xF0) * 0x40000 + (b2 - 0x80) * 0x1000 + (b3 - 0x80) * 0x40 + (b4 - 0x80)
-end
-
-local function normalizeText(text)
-	return (text:gsub("[%z\1-\127\194-\244][\128-\191]*", function(ch)
-		if #ch == 1 then
-			return ch
-		end
-		local mapped = normalizeCodepoint(decodeUTF8(ch))
-		return mapped and string.char(mapped) or ch
-	end))
 end
 
 local function activityData(info)
@@ -200,43 +91,6 @@ local function activityData(info)
 	return names, categoryID, maxPlayers, display
 end
 
-local function ruleToString(rule)
-	local parts = {}
-	for _, w in ipairs(rule.words) do
-		parts[#parts + 1] = w
-	end
-	for _, role in ipairs(rule.roles) do
-		parts[#parts + 1] = "+" .. ROLE_LABEL[role]
-	end
-	if rule.category == CATEGORY_DUNGEONS then
-		parts[#parts + 1] = "+dungeon"
-	end
-	return table.concat(parts, " ")
-end
-
--- Raid listings have no per-role caps, so Blizzard's *_REMAINING counts are
--- effectively always positive there (a 2/4/14 raid still reports open tank
--- slots). Standard-composition thresholds are the meaningful check instead.
-local ROLE_NEED = {
-	[CATEGORY_DUNGEONS] = { TANK = 1, HEALER = 1, DAMAGER = 3 },
-	[CATEGORY_RAIDS] = { TANK = 2, HEALER = 4, DAMAGER = math.huge },
-}
-
-local function roleIsOpen(role, counts, info, categoryID, maxPlayers)
-	local numMembers = safeNum(info.numMembers)
-	if maxPlayers and maxPlayers > 0 and numMembers and numMembers >= maxPlayers then
-		return false
-	end
-	local need = categoryID and ROLE_NEED[categoryID] and ROLE_NEED[categoryID][role]
-	if need then
-		local have = safeNum(counts[role])
-		-- unknown counts as open: a spurious alert beats a missed group
-		return have == nil or have < need
-	end
-	local remaining = safeNum(counts[ROLE_REMAINING[role]])
-	return remaining == nil or remaining > 0
-end
-
 local function ruleMatches(rule, haystack, resultID, info, categoryID, maxPlayers)
 	if rule.category and categoryID and rule.category ~= categoryID then
 		return false
@@ -252,7 +106,7 @@ local function ruleMatches(rule, haystack, resultID, info, categoryID, maxPlayer
 			return false
 		end
 		for _, role in ipairs(rule.roles) do
-			if not roleIsOpen(role, counts, info, categoryID, maxPlayers) then
+			if not roleIsOpen(role, counts, safeNum(info.numMembers), categoryID, maxPlayers) then
 				return false
 			end
 		end
@@ -265,17 +119,6 @@ end
 -- only ever sees the leader name and activity name, so seller filtering
 -- works on leaders: ignore words match leader names, and leaders on the
 -- player's in-game ignore list are skipped outright.
-local function matchesIgnoreWord(haystack)
-	-- also match with all separators stripped, so "W T S" / "W.T.S" hit "wts"
-	local compact = haystack:gsub("[^%w]", "")
-	for _, word in ipairs(db.ignores or {}) do
-		local pattern = fuzzyPattern(word)
-		if haystack:find(pattern) or compact:find(pattern) then
-			return word
-		end
-	end
-end
-
 -- A missing leader or an "Unknown" placeholder title means the listing's
 -- data hasn't loaded (or never will — delisted husks stay in the raw
 -- results but the panel hides them).
@@ -347,7 +190,7 @@ local function blockedReason(haystack, leader, comment)
 	if C_FriendList and C_FriendList.IsIgnored and C_FriendList.IsIgnored(leader) then
 		return "on your ignore list"
 	end
-	local word = matchesIgnoreWord(haystack)
+	local word = matchesIgnoreWord(haystack, db.ignores)
 	if word then
 		return ("ignore word \"%s\""):format(word)
 	end
@@ -860,31 +703,6 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		queueScan()
 	end
 end)
-
-local function parseRule(input)
-	local rule = { words = {}, roles = {} }
-	for token in input:gmatch("%S+") do
-		local tag = token:match("^%+(%S+)$")
-		if tag then
-			tag = tag:lower()
-			if tag == "raid" or tag == "raids" then
-				rule.category = CATEGORY_RAIDS
-			elseif tag == "dungeon" or tag == "dungeons" or tag == "m+" or tag == "mplus" then
-				rule.category = CATEGORY_DUNGEONS
-			elseif ROLE_TOKENS[tag] then
-				rule.roles[#rule.roles + 1] = ROLE_TOKENS[tag]
-			else
-				return nil, ("unknown tag \"+%s\" (use +tank, +healer, +dps, +raid, +dungeon)"):format(tag)
-			end
-		else
-			rule.words[#rule.words + 1] = token:lower()
-		end
-	end
-	if #rule.words == 0 and #rule.roles == 0 then
-		return nil, "empty rule"
-	end
-	return rule
-end
 
 local function status()
 	msg(("v%s | %s | auto-search: %s (every %ds)%s"):format(

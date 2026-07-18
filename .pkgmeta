@@ -3,3 +3,4 @@ manual-changelog: CHANGELOG.md
 
 ignore:
   - logo.png
+  - tests
