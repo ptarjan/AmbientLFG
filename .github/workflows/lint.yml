@@ -16,3 +16,29 @@ jobs:
       - name: Install Lua 5.1 (WoW's Lua version)
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lua5.1
       - run: lua5.1 tests/run.lua
+
+  api-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: WoW API definitions
+        run: git clone -q --depth 1 https://github.com/Ketho/vscode-wow-api /tmp/wow-api
+      - name: lua-language-server
+        run: |
+          curl -sL https://github.com/LuaLS/lua-language-server/releases/download/3.18.2/lua-language-server-3.18.2-linux-x64.tar.gz -o /tmp/luals.tgz
+          mkdir -p /tmp/luals && tar -xzf /tmp/luals.tgz -C /tmp/luals
+      - name: Check against WoW API (deprecated calls fail the build)
+        run: |
+          cat > /tmp/luarc.json <<'CFG'
+          {
+              "runtime.version": "Lua 5.1",
+              "workspace.library": ["/tmp/wow-api/Annotations"],
+              "workspace.checkThirdParty": false,
+              "diagnostics.libraryFiles": "Disable",
+              "diagnostics.disable": ["undefined-global", "lowercase-global", "redefined-local", "unused-local", "trailing-space", "cast-local-type", "assign-type-mismatch", "param-type-mismatch", "duplicate-set-field", "need-check-nil", "undefined-field", "invisible", "inject-field"],
+              "workspace.ignoreDir": ["libs", "locales", "tests"]
+          }
+          CFG
+          OUT=$(/tmp/luals/bin/lua-language-server --check . --configpath /tmp/luarc.json --checklevel=Warning 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -q "no problems found"
