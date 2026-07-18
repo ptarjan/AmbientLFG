@@ -163,27 +163,27 @@ local function activityData(info)
 				-- for raid bosses the shortName is often JUST the difficulty
 				-- ("Mythic") — worthless alone; fall back to the full name
 				local shortLower = shortName:lower()
-				local display = shortName
-				if display == "" or shortLower == "mythic" or shortLower == "heroic"
+				local displayName = shortName
+				if displayName == "" or shortLower == "mythic" or shortLower == "heroic"
 					or shortLower == "normal" or shortLower == "mythic keystone"
 					or shortLower == "lfr" or shortLower == "raid finder" then
-					display = fullName
+					displayName = fullName
 				end
 				-- the short name drops the difficulty; recover it from the
 				-- full name ("Raid - Boss (Mythic)") when it's missing
-				local lowerFull, lowerDisplay = fullName:lower(), display:lower()
+				local lowerFull, lowerDisplay = fullName:lower(), displayName:lower()
 				for _, diff in ipairs({ "Mythic Keystone", "Mythic", "Heroic", "Normal" }) do
 					local lowerDiff = diff:lower()
 					if lowerFull:find(lowerDiff, 1, true) then
 						if not lowerDisplay:find(lowerDiff, 1, true) then
-							display = ("%s (%s)"):format(display, diff == "Mythic Keystone" and "M+" or diff)
+							displayName = ("%s (%s)"):format(displayName, diff == "Mythic Keystone" and "M+" or diff)
 						end
 						break
 					end
 				end
 				cached = {
 					name = fullName:lower(),
-					display = display,
+					display = displayName,
 					categoryID = actInfo and safeNum(actInfo.categoryID),
 					maxPlayers = actInfo and safeNum(actInfo.maxNumPlayers),
 				}

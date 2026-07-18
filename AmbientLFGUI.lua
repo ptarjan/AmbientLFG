@@ -1,4 +1,4 @@
-local ADDON_NAME, ns = ...
+local _, ns = ...
 
 local FRAME_WIDTH = 400
 local FRAME_HEIGHT = 534
@@ -284,26 +284,26 @@ local function CreateUI()
 	end)
 
 	-- Options: Enabled / Sound / Flash
-	local db = ns.GetDB
+	local getDb = ns.GetDB
 	f.enabledCB = MakeCheckbox(f, "Enabled", function(checked)
-		db().enabled = checked
+		getDb().enabled = checked
 		Refresh()
 	end)
 	f.enabledCB:SetPoint("TOPLEFT", f, "TOPLEFT", PADDING, -30)
 
 	f.soundCB = MakeCheckbox(f, "Sound", function(checked)
-		db().sound = checked
+		getDb().sound = checked
 	end)
 	f.soundCB:SetPoint("LEFT", f.enabledCB.label, "RIGHT", 16, 0)
 
 	f.flashCB = MakeCheckbox(f, "Flash taskbar", function(checked)
-		db().flash = checked
+		getDb().flash = checked
 	end)
 	f.flashCB:SetPoint("LEFT", f.soundCB.label, "RIGHT", 16, 0)
 
 	-- Auto-search + interval
 	f.autoCB = MakeCheckbox(f, "Auto-search every", function(checked)
-		db().auto = checked
+		getDb().auto = checked
 		ns.restartTicker()
 		Refresh()
 	end)
@@ -318,7 +318,7 @@ local function CreateUI()
 	local function commitInterval(self)
 		local n = tonumber(self:GetText())
 		if n and n >= 5 then
-			db().interval = math.floor(n)
+			getDb().interval = math.floor(n)
 			ns.restartTicker()
 		end
 		Refresh()
@@ -334,7 +334,7 @@ local function CreateUI()
 	secText:SetText("sec")
 
 	f.debugCB = MakeCheckbox(f, "Chat log", function(checked)
-		db().debug = checked
+		getDb().debug = checked
 	end)
 	f.debugCB:SetPoint("LEFT", secText, "RIGHT", 16, 0)
 
@@ -387,7 +387,7 @@ local function CreateUI()
 		for word in (self:GetText() or ""):gmatch("[^,%s]+") do
 			words[#words + 1] = word:lower()
 		end
-		db().ignores = words
+		getDb().ignores = words
 		Refresh()
 	end
 	f.ignoreBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
