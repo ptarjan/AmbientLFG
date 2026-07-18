@@ -51,7 +51,7 @@ read_globals = {
     "INLINE_TANK_ICON", "LE_PARTY_CATEGORY_INSTANCE",
     "LOCALIZED_CLASS_NAMES_FEMALE", "LOCALIZED_CLASS_NAMES_MALE",
     "RAID_CLASS_COLORS", "RANDOM_ROLL_RESULT", "ROLE_CHANGED_INFORM",
-    "SOUNDKIT", "UNKNOWN",
+    "SOUNDKIT", "TANK", "HEALER", "UNKNOWN",
     -- other addons integrated with
     "AceGUI", "DBM", "Details", "ElvUI", "LibStub", "Recount", "Skada",
     "tdpsPet", "tdpsPlayer",
