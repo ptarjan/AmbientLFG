@@ -2,7 +2,7 @@
 ## Title: AmbientLFG
 ## IconTexture: Interface\Icons\INV_Misc_Bell_01
 ## Author: ptarjan
-## Version: 0.4.0
+## Version: 0.4.1
 ## Notes: Replays the Group Finder search you ran and alerts you when a group with a seat you can fill appears.
 ## SavedVariables: AmbientLFGDB
 ## X-Curse-Project-ID: 1607618

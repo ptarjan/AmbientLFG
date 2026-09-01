@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+- Joining a group stops the watch. Accepting an invite to a group you applied for means the search has found what it was for, and alerting about more of them is the addon talking over the thing you asked it to find. Leaving that group does not start it again — run the search once more, the same as after a `/reload`, because the search box can only be read while Blizzard's panel is open and a search replayed without it is every group in the category.
+- Key propagation is no longer re-asserted in combat, where setting it is blocked and reported against the addon.
+
 ## 0.4.0
 **Rules are gone. You craft the search; the addon runs it for you.**
 

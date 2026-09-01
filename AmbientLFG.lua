@@ -591,6 +591,26 @@ local function armed()
 	return boxCategory == nil or boxCategory == lastSearch[1]
 end
 
+-- Watching ends when the player is in the group they were looking for. The
+-- captured search has done its job, and going on alerting for more of the same
+-- is the addon talking over the thing it was asked to find.
+--
+-- Leaving that group does not put it back. Nothing re-arms itself here, for the
+-- same reason a reload does not: the search box is engine state that can only be
+-- read while Blizzard's panel is on screen, so a search replayed without it is
+-- every group in the category while still naming a filter it no longer has.
+-- Run the search again and it is watched again.
+local function disarm()
+	lastSearch = nil
+	boxText = ""
+	boxCategory = nil
+	primed = false
+	primedFor = nil
+	wipe(matches)
+	wipe(pendingConfirm)
+	wipe(currentSet)
+end
+
 local function scanResults()
 	local results = searchResults()
 	if type(results) ~= "table" then
@@ -839,7 +859,8 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
 frame:RegisterEvent("LFG_LIST_SEARCH_RESULT_UPDATED")
 frame:RegisterEvent("LFG_LIST_SEARCH_FAILED")
-frame:SetScript("OnEvent", function(_, event, arg1)
+frame:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED")
+frame:SetScript("OnEvent", function(_, event, arg1, arg2)
 	if event == "PLAYER_LOGIN" then
 		AmbientLFGDB = AmbientLFGDB or {}
 		db = AmbientLFGDB
@@ -900,6 +921,11 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 			msg("watching suspended — the Group Finder keeps rejecting searches (not usable right now?). It resumes after a successful manual search, or untick and retick Watch.")
 		elseif db and db.debug then
 			msg(("search failed — backing off %ds"):format(backoff))
+		end
+	elseif event == "LFG_LIST_APPLICATION_STATUS_UPDATED" then
+		if Match.joinedGroup(arg2) then
+			disarm()
+			msg("you're in a group — watching stopped. Run your search again in the Group Finder if you want to keep looking.")
 		end
 	elseif event == "LFG_LIST_SEARCH_RESULT_UPDATED" then
 		markDirty(arg1)

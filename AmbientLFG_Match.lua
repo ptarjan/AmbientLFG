@@ -29,6 +29,13 @@ function Match.safeStr(v)
 	return tostring(v)
 end
 
+-- The one application status that means the player is now in the group they
+-- went looking for. Not "invited": an invitation can be declined or time out,
+-- and standing down on it would end the watch over a group never joined.
+function Match.joinedGroup(status)
+	return Match.safeStr(status) == "inviteaccepted"
+end
+
 function Match.safeBool(v)
 	if issecretvalue and issecretvalue(v) then
 		return false

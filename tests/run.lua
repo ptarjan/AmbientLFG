@@ -197,6 +197,28 @@ describe("alertLine", function()
     end)
 end)
 
+describe("joinedGroup", function()
+    it("stands down once the invite is accepted", function()
+        eq(M.joinedGroup("inviteaccepted"), true)
+    end)
+    it("keeps watching through every status that is not being in the group", function()
+        -- an invite can still be declined or time out, and applying is the
+        -- point at which you most want to hear about a better group
+        for _, status in ipairs({ "applied", "invited", "invitedeclined",
+                "declined", "declined_full", "declined_delisted", "timedout",
+                "cancelled", "failed", "none" }) do
+            eq(M.joinedGroup(status), false, status)
+        end
+    end)
+    it("does not stand down on a status it cannot read", function()
+        local secret = {}
+        _G.issecretvalue = function(v) return v == secret end
+        eq(M.joinedGroup(secret), false)
+        _G.issecretvalue = nil
+        eq(M.joinedGroup(nil), false)
+    end)
+end)
+
 describe("isOwnListing", function()
     it("knows your own listing by the flag the listing itself carries", function()
         eq(M.isOwnListing(true, "Someoneelse", nil), true)
