@@ -510,7 +510,11 @@ local function scanStep()
 		-- only the full post-search scan reports; the small incremental
 		-- batches from streaming updates stay silent
 		if db.debug and scanIsFull then
-			msg(("scanned %d listings in %.1f ms"):format(count, stats.scanMs or 0))
+			-- named here too: a scan that matched nothing is the case where
+			-- you most want to know which search produced the zero
+			msg(("scanned %d listings for %s in %.1f ms"):format(count,
+				searchDescription(lastSearch and lastSearch[1], boxText),
+				stats.scanMs or 0))
 		end
 		scanIsFull = false
 	end
