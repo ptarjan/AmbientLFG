@@ -319,8 +319,11 @@ local function alertMatches(hits)
 	for _, h in ipairs(hits) do
 		leaders[#leaders + 1] = h.leader or h.name
 	end
-	msg(("Group Finder match%s from %s — open the Group Finder and sign up."):format(
-		#hits > 1 and "es" or "", table.concat(leaders, ", ")))
+	-- the search is named because the alert can arrive minutes after the search
+	-- was set up, and "match from Bob" alone does not say what it matched
+	msg(("Group Finder match%s from %s (%s) — open the Group Finder and sign up."):format(
+		#hits > 1 and "es" or "", table.concat(leaders, ", "),
+		searchDescription(lastSearch and lastSearch[1], boxText)))
 end
 
 -- Listing details (comment, leaderName, member counts) stream in over the
