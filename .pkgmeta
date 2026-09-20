@@ -4,4 +4,5 @@ manual-changelog: CHANGELOG.md
 ignore:
   - logo.png
   - screenshot.jpg
+  - screenshot-raid.jpg
   - tests
