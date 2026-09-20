@@ -2,6 +2,8 @@
 
 Watches the WoW Premade Group Finder for the groups you're actually looking for and alerts you the moment one appears — so you can stop refreshing the browse window and just play.
 
+![The /alfg window watching a Mythic+ search](screenshot.jpg)
+
 ## What it does
 
 You set up the search you want in Blizzard's own Group Finder — category, filters, and the search box, including a keystone level or a range like `12-14`. Run it once. AmbientLFG then replays exactly that search in the background and alerts you when a group comes up that has a seat you can fill.
