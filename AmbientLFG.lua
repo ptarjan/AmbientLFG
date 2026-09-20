@@ -33,6 +33,7 @@ local activityNameCache = {}
 local stats = { autoIssued = 0 }
 local matches = {} -- currently-listed groups matching a rule, for the UI
 local lastSearch -- captured args from the most recent C_LFGList.Search call
+local parkedSearch -- that search held over a group, for the drop that follows
 local boxText = "" -- the search box as of the last search the player ran
 local boxCategory -- the section that box belongs to, read the same way
 -- A group already on the board when watching starts is not news. Without this
@@ -602,12 +603,12 @@ end
 -- captured search has done its job, and going on alerting for more of the same
 -- is the addon talking over the thing it was asked to find.
 --
--- Leaving that group does not put it back. Nothing re-arms itself here, for the
--- same reason a reload does not: the search box is engine state that can only be
--- read while Blizzard's panel is on screen, so a search replayed without it is
--- every group in the category while still naming a filter it no longer has.
--- Run the search again and it is watched again.
+-- The search is parked rather than thrown away: a player who drops that group
+-- minutes later is looking for the same thing, and making them retype a
+-- keystone range they already typed is the addon forgetting on purpose. It is
+-- only ever replayed against a box that still reads it back — see rearm.
 local function disarm()
+	parkedSearch = lastSearch
 	lastSearch = nil
 	boxText = ""
 	boxCategory = nil
@@ -616,6 +617,29 @@ local function disarm()
 	wipe(matches)
 	wipe(pendingConfirm)
 	wipe(currentSet)
+end
+
+-- Dropping the group puts the watch back, but only while Blizzard's panel is
+-- still open with the text still in it. The search box is the filter and the
+-- engine reads it live as the search runs, so a search replayed against an
+-- empty box is every group in the category while still naming a filter it no
+-- longer has — the same reason a reload does not restore one. A box that reads
+-- back in the same section is the only evidence the filter survived, so that is
+-- the condition, and one drop is one chance: the parked search is spent either
+-- way. Priming stays off, so the board as it stands when the watch resumes is
+-- the baseline rather than a screenful of alerts.
+local function rearm()
+	local parked = parkedSearch
+	parkedSearch = nil
+	if parked == nil or not db or not db.enabled then
+		return
+	end
+	local text = rememberBoxText()
+	if not Match.rearmable(parked[1], text, boxCategory) then
+		return
+	end
+	lastSearch = parked
+	msg(("watching again: %s"):format(searchDescription(parked[1], text)))
 end
 
 local function scanResults()
@@ -867,6 +891,7 @@ frame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
 frame:RegisterEvent("LFG_LIST_SEARCH_RESULT_UPDATED")
 frame:RegisterEvent("LFG_LIST_SEARCH_FAILED")
 frame:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED")
+frame:RegisterEvent("GROUP_LEFT")
 frame:SetScript("OnEvent", function(_, event, arg1, arg2)
 	if event == "PLAYER_LOGIN" then
 		AmbientLFGDB = AmbientLFGDB or {}
@@ -932,8 +957,10 @@ frame:SetScript("OnEvent", function(_, event, arg1, arg2)
 	elseif event == "LFG_LIST_APPLICATION_STATUS_UPDATED" then
 		if Match.joinedGroup(arg2) then
 			disarm()
-			msg("you're in a group — watching stopped. Run your search again in the Group Finder if you want to keep looking.")
+			msg("you're in a group — watching stopped. Drop group with the Group Finder still open and it picks the same search back up; otherwise run your search again.")
 		end
+	elseif event == "GROUP_LEFT" then
+		rearm()
 	elseif event == "LFG_LIST_SEARCH_RESULT_UPDATED" then
 		markDirty(arg1)
 	else

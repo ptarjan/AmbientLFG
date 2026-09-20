@@ -3,7 +3,7 @@
 ## 0.4.1
 - The debug scan line names the search too, so a scan that matched nothing says which search found nothing.
 - The match alert in chat names the search it matched, the same way `/alfg` does, so an alert that arrives long after you set the search up says what it is for.
-- Joining a group stops the watch. Accepting an invite to a group you applied for means the search has found what it was for, and alerting about more of them is the addon talking over the thing you asked it to find. Leaving that group does not start it again — run the search once more, the same as after a `/reload`, because the search box can only be read while Blizzard's panel is open and a search replayed without it is every group in the category.
+- Joining a group stops the watch. Accepting an invite to a group you applied for means the search has found what it was for, and alerting about more of them is the addon talking over the thing you asked it to find. Dropping that group picks the same search back up, as long as the Group Finder is still open with your text still in the box; otherwise run the search once more, the same as after a `/reload`, because the box can only be read while Blizzard's panel is open and a search replayed without it is every group in the category.
 - Key propagation is no longer re-asserted in combat, where setting it is blocked and reported against the addon.
 
 ## 0.4.0

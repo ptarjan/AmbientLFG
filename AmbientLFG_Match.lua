@@ -36,6 +36,19 @@ function Match.joinedGroup(status)
 	return Match.safeStr(status) == "inviteaccepted"
 end
 
+-- Whether a search parked when the player joined a group may be replayed now
+-- that they have left it. The search box is the filter and the engine reads it
+-- live as the search runs, so the only evidence the filter survived is a box
+-- that still reads back non-empty in the same section. A closed Group Finder,
+-- a cleared box or another section would all replay as every group in the
+-- category under the parked search's name.
+function Match.rearmable(parkedCategory, boxText, boxCategory)
+	if parkedCategory == nil or Match.safeStr(boxText) == "" then
+		return false
+	end
+	return boxCategory == parkedCategory
+end
+
 function Match.safeBool(v)
 	if issecretvalue and issecretvalue(v) then
 		return false
