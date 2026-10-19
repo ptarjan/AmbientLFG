@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Custom groups, and every other category besides Dungeons and Raids, alert on any listing the search finds. Your spec's role used to be applied there too, so a tank could miss a custom group the search had already found; group makeup means nothing in a free-form group.
+
 ## 0.4.1
 - The debug scan line names the search too, so a scan that matched nothing says which search found nothing.
 - The match alert in chat names the search it matched, the same way `/alfg` does, so an alert that arrives long after you set the search up says what it is for.

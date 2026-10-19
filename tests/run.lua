@@ -291,6 +291,19 @@ describe("matchesIgnoreWord", function()
 end)
 
 
+describe("wantedRolesFor", function()
+    local dungeon = function() return { HEALER = true } end
+    local raid = function() return { TANK = true } end
+    it("reads the Group Finder filter for Dungeons and the addon's own for Raids", function()
+        eq(M.rolesToString(M.wantedRolesFor(M.CATEGORY_DUNGEONS, dungeon, raid)), "healer")
+        eq(M.rolesToString(M.wantedRolesFor(M.CATEGORY_RAIDS, dungeon, raid)), "tank")
+    end)
+    it("wants any seat in Custom and every other free-form category", function()
+        eq(M.rolesToString(M.wantedRolesFor(6, dungeon, raid)), "any role")
+        eq(M.rolesToString(M.wantedRolesFor(121, dungeon, raid)), "any role")
+    end)
+end)
+
 describe("roleIsOpen", function()
     local RAID, DUNGEON = M.CATEGORY_RAIDS, M.CATEGORY_DUNGEONS
     it("raid with 2 tanks is closed for tanks (the 2/4/14 bug)", function()

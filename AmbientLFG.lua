@@ -141,10 +141,7 @@ local function dungeonRoles()
 end
 
 local function wantedRoles()
-	if lastSearch and lastSearch[1] == Match.CATEGORY_DUNGEONS then
-		return dungeonRoles()
-	end
-	return raidRoles()
+	return Match.wantedRolesFor(lastSearch and lastSearch[1], dungeonRoles, raidRoles)
 end
 
 -- What the search returned is what the player asked for — the addon does not
@@ -1015,6 +1012,7 @@ local function status()
 		or "nothing to watch — open the Group Finder, set up the search you want, and run it once")
 	msg("alerting when there is an open seat for: " .. rolesToString(wantedRoles())
 		.. (watchedCategory() == Match.CATEGORY_DUNGEONS and " (set in the Group Finder's Filter)"
+			or not Match.categoryHasRoles(watchedCategory()) and " (no seat check outside Dungeons and Raids)"
 			or db.raidRoles and " (raids: set in /alfg ui)"
 			or " (raids: your current spec)"))
 	msg("ignoring groups containing: " .. (#db.ignores > 0 and table.concat(db.ignores, ", ") or "(nothing)"))

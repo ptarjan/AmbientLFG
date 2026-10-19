@@ -262,6 +262,27 @@ function Match.resolveRaidRoles(saved, role)
 	return {}
 end
 
+-- Only Dungeons and Raids have a composition worth checking. Custom, Delves,
+-- PvP and the rest are free-form, and their *_REMAINING counts do not describe
+-- open seats: applying your spec's role there let a tank miss a custom group
+-- the search had found. Outside the two the answer is any seat, which is all
+-- group makeup means in a free-form group.
+function Match.categoryHasRoles(categoryID)
+	return categoryID == Match.CATEGORY_DUNGEONS or categoryID == Match.CATEGORY_RAIDS
+end
+
+-- The getters are passed in, not called first, because the dungeon one reads
+-- the Group Finder's live filter and only Dungeons should read it.
+function Match.wantedRolesFor(categoryID, dungeonRoles, raidRoles)
+	if categoryID == Match.CATEGORY_DUNGEONS then
+		return dungeonRoles()
+	end
+	if categoryID == Match.CATEGORY_RAIDS or categoryID == nil then
+		return raidRoles()
+	end
+	return {}
+end
+
 -- Raid listings have no per-role caps, so Blizzard's *_REMAINING counts are
 -- effectively always positive there (a 2/4/14 raid still reports open tank
 -- slots). Standard-composition thresholds are the meaningful check instead.
